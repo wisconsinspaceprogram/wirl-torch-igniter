@@ -1,7 +1,8 @@
 import pygame, sys
 import pygame_chart as pyc
 from BluetoothConnection import BluetoothConnection
-from Plotter import Plotter, PlotterManager
+from Plotter import Plotter
+from PlotterManager import PlotterManager
 import time
 import os
 
@@ -35,9 +36,13 @@ pauseButton = Buttonify(dirname + 'Pause.png',(450, 25), (150, 50), screen)
 playButton = Buttonify(dirname + 'Play.png',(625, 25), (150, 50), screen)
 
 #Vent buttons
-ventButton = Buttonify(dirname + 'Vent.png',(1100, 650), (150, 50), screen)
-oxVentButton = Buttonify(dirname + 'OxVent.png',(1100, 725), (150, 50), screen)
-methVenetButton = Buttonify(dirname + 'MethVent.png',(1100, 800), (150, 50), screen)
+ventButton = Buttonify(dirname + 'Vent.png',(1100, 675), (150, 50), screen)
+oxVentButton = Buttonify(dirname + 'OxVent.png',(1100, 750), (150, 50), screen)
+methVenetButton = Buttonify(dirname + 'MethVent.png',(1100, 825), (150, 50), screen)
+
+#Fire Buttons
+fireButton = Buttonify(dirname + 'Fire.png',(1300, 675), (150, 50), screen)
+dryFireButton = Buttonify(dirname + 'DryFire.png',(1300, 750), (150, 50), screen)
 
 # Valve base image
 Buttonify(dirname + 'PNID.png', (1000, 100), (800, 548), screen)
@@ -149,13 +154,20 @@ while True:
 
           #vent buttons
           if ventButton[1].collidepoint(mouse) and connected:
-              bt.send_line("s4e")  #s and e used to note start and end of message, so we can only get full messages in arduino, state 4
+            bt.send_line("s4e")  #s and e used to note start and end of message, so we can only get full messages in arduino, state 4
 
           if oxVentButton[1].collidepoint(mouse) and connected:
-              bt.send_line("s2e")  #s and e used to note start and end of message, so we can only get full messages in arduino
+            bt.send_line("s2e")  #s and e used to note start and end of message, so we can only get full messages in arduino
 
           if methVenetButton[1].collidepoint(mouse) and connected:
-              bt.send_line("s3e")  #s and e used to note start and end of message, so we can only get full messages in arduino    
+            bt.send_line("s3e")  #s and e used to note start and end of message, so we can only get full messages in arduino   
+
+          #FIre buttons 
+          if fireButton[1].collidepoint(mouse) and connected:
+            bt.send_line("s1e")
+          
+          if dryFireButton[1].collidepoint(mouse) and connected:
+            bt.send_line("s11e")
 
     # Reading data
     if connected:

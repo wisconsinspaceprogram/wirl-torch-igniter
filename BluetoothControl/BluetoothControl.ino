@@ -44,6 +44,7 @@ float oldTemperature4 = 0;
 // 8=> toggle valve 4, nitrogen ox, 
 // 9=> toggle valve 5, meth final,
 // 10=> toggle valve 6, ox final,
+// 11=> dry firing,
 int systemState = 0;  //System State of firing vs idle:
 
 
@@ -71,6 +72,10 @@ void setup() {
   pinMode(methIgnitorPin, OUTPUT);
   pinMode(oxIgnitorPin, OUTPUT); 
   pinMode(sparkPin, OUTPUT);
+
+  //Making sure we start with everything shut and disabled
+  digitalWrite(sparkPin, LOW);
+  setValveStates(0, 0, 0, 0, 0, 0);
 
 }
 
@@ -190,164 +195,51 @@ void loop() {
     
   }
 
+  //Dry Fire
+  if(systemState == 11){
+    if(t - t0 < 1){
+      setValveStates(1, 1, 0, 0, 0, 0);
+
+    } else if(t - t0 < 2.5){
+      setValveStates(1, 1, 0, 0, 1, 1);
+
+    } else if(t - t0 < 3.5){
+      setValveStates(0, 0, 0, 0, 1, 1);
+      
+    } else if(t - t0 < 4.5){
+      setValveStates(0, 0, 1, 1, 1, 1);
+
+    } else if(t - t0 > 4.5){
+      setValveStates(0, 0, 0, 0, 0, 0);
+      systemState = 0;
+    }
+  }
+
+  //Fire!!!!
+  if(systemState == 1){
+    if(t - t0 < 1){
+      setValveStates(1, 1, 0, 0, 0, 0);
+
+    } else if(t - t0 < 2.5){
+      digitalWrite(sparkPin, HIGH);
+      setValveStates(1, 1, 0, 0, 1, 1);
+
+    } else if(t - t0 < 3.5){
+      digitalWrite(sparkPin, LOW);
+      setValveStates(0, 0, 0, 0, 1, 1);
+      
+    } else if(t - t0 < 4.5){
+      setValveStates(0, 0, 1, 1, 1, 1);
+
+    } else if(t - t0 > 4.5){
+      setValveStates(0, 0, 0, 0, 0, 0);
+      systemState = 0;
+    }
+  }
+
 
   //Updating valves based on desired state
   setValves();
-
-  // //pre-fire state
-  // if(systemState == 0){
-  //   //Keeping valves shut
-  //   closeAllValves();
-
-  //   //Setting spark plug to off
-  //   digitalWrite(sparkPin, LOW);
-
-
-  //   //IGNITION!
-  //   //2000us should be the "high" / fire value
-  //   if(false) { 
-  //     //Setting ignition time
-  //     t0 = millis(); 
-
-  //     //Setting system state
-  //     systemState = 1;
-  //   }
-  // } 
-  // //during-fire state
-  // else if (systemState == 1){
-  //   //Getting the time since ignition in milliseconds
-  //   int t = millis() - t0;
-
-  //   //Log data to sd card
-
-
-  //   //0 - 2 seconds
-  //   if(t < 2000){
-  //     // Open valves connecting Methane and gox tanks to fill tubes with gas, keeping the final valve before the ignitor closed.
-  //     digitalWrite(methMainPin, HIGH);
-  //     digitalWrite(oxMainPin, HIGH);
-  //     digitalWrite(nMethPin, LOW);
-  //     digitalWrite(nOxPin, LOW);
-  //     digitalWrite(methIgnitorPin, LOW);
-  //     digitalWrite(oxIgnitorPin, LOW);
-
-  //     //Spark off
-  //     digitalWrite(sparkPin, LOW);
-  //   } 
-
-  //   //2 - 2.25 seconds
-  //   else if (t < 2250){
-  //     //Open final valves for oxygen and methane, flowing through combustion chamber
-  //     digitalWrite(methMainPin, HIGH);
-  //     digitalWrite(oxMainPin, HIGH);
-  //     digitalWrite(nMethPin, LOW);
-  //     digitalWrite(nOxPin, LOW);
-  //     digitalWrite(methIgnitorPin, HIGH);
-  //     digitalWrite(oxIgnitorPin, HIGH);
-
-  //     //Spark off
-  //     digitalWrite(sparkPin, LOW);
-  //   }
-
-  //   //2.25 - 3.25 seconds
-  //   else if(t < 3250){
-  //     //Keep all those valves open
-  //     digitalWrite(methMainPin, HIGH);
-  //     digitalWrite(oxMainPin, HIGH);
-  //     digitalWrite(nMethPin, LOW);
-  //     digitalWrite(nOxPin, LOW);
-  //     digitalWrite(methIgnitorPin, HIGH);
-  //     digitalWrite(oxIgnitorPin, HIGH);
-
-  //     //Spark
-  //     digitalWrite(sparkPin, HIGH);
-  //   }
-
-  //   //3.25 - 3.75 seconds
-  //   else if(t < 3750){
-  //     //Close valves closest to methane and ox tanks
-  //     closeAllValves();
-
-  //     //Spark off
-  //     digitalWrite(sparkPin, LOW);
-  //   }
-
-  //   //3.75 - 4.75 seconds
-  //   else if(t < 4750){
-  //     //Open N tank to vent methane side
-  //     digitalWrite(methMainPin, LOW);
-  //     digitalWrite(oxMainPin, LOW);
-  //     digitalWrite(nMethPin, HIGH);
-  //     digitalWrite(nOxPin, LOW);
-  //     digitalWrite(methIgnitorPin, HIGH);
-  //     digitalWrite(oxIgnitorPin, LOW);
-
-  //     //Spark off
-  //     digitalWrite(sparkPin, LOW);
-  //   }
-
-  //   //4.75 - 5.75 seconds
-  //   else if(t < 5750){
-  //     //Open N tank to vent ox side
-  //     digitalWrite(methMainPin, LOW);
-  //     digitalWrite(oxMainPin, LOW);
-  //     digitalWrite(nMethPin, LOW);
-  //     digitalWrite(nOxPin, HIGH);
-  //     digitalWrite(methIgnitorPin, LOW);
-  //     digitalWrite(oxIgnitorPin, HIGH);
-
-  //     //Spark off
-  //     digitalWrite(sparkPin, LOW);
-  //   }
-
-  //   //5.75 - 7 seconds
-  //   else if (t < 7000){
-  //     //Vent both sides
-  //     digitalWrite(methMainPin, LOW);
-  //     digitalWrite(oxMainPin, LOW);
-  //     digitalWrite(nMethPin, HIGH);
-  //     digitalWrite(nOxPin, HIGH);
-  //     digitalWrite(methIgnitorPin, HIGH);
-  //     digitalWrite(oxIgnitorPin, HIGH);
-
-  //     //Spark off
-  //     digitalWrite(sparkPin, LOW);
-  //   } 
-  //   //7 - 8 seconds
-  //   else if (t < 8000){
-  //     //Close N valves but keep inline valves open to get all pressure out of system
-  //     digitalWrite(methMainPin, LOW);
-  //     digitalWrite(oxMainPin, LOW);
-  //     digitalWrite(nMethPin, LOW);
-  //     digitalWrite(nOxPin, LOW);
-  //     digitalWrite(methIgnitorPin, HIGH);
-  //     digitalWrite(oxIgnitorPin, HIGH);
-
-  //     //Spark off
-  //     digitalWrite(sparkPin, LOW);
-  //   }
-
-  //   //8+ seconds, test over 
-  //   else {
-  //     //Set all valves to closed
-  //     closeAllValves();
-
-  //     //Spark off
-  //     digitalWrite(sparkPin, LOW);
-
-  //     //Going to post fire state
-  //     systemState = 0;
-  //   }
-  // }
-  // //post-fire state
-  // else if(systemState == 2){
-  //   //Holding valves shut
-  //   closeAllValves();
-
-  //   //Spark off
-  //   digitalWrite(sparkPin, LOW);
-  // }
-
   
   //Logging more info
   for(int i = 0; i < valveCnt; i++){
