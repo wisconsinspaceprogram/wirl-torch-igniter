@@ -141,6 +141,11 @@ void loop() {
   ser.print(systemState);
   ser.print(",");
 
+  //Forcing spark pin off
+  if(systemState == 0){
+    digitalWrite(sparkPin, LOW);
+  }
+
   //Valve toggle updates
   if(systemState >= 5 && systemState <= 10){
     toggleValve(systemState - 5); //Valve index 0 is system state 5, so this handles all the toggles
@@ -149,6 +154,7 @@ void loop() {
 
   //Ox vent
   if(systemState == 2){
+    digitalWrite(sparkPin, LOW);
     if(t - t0 < 1){
       setValveStates(0, 0, 0, 0, 0, 1);
 
@@ -165,6 +171,7 @@ void loop() {
 
   //Meth vent
   if(systemState == 3){
+    digitalWrite(sparkPin, LOW);
     if(t - t0 < 1){
       setValveStates(0, 0, 0, 0, 1, 0);
 
@@ -181,6 +188,7 @@ void loop() {
 
   //Full vent
   if(systemState == 4){
+    digitalWrite(sparkPin, LOW);
     if(t - t0 < 1){
       setValveStates(0, 0, 0, 0, 1, 1);
 
@@ -197,6 +205,7 @@ void loop() {
 
   //Dry Fire
   if(systemState == 11){
+    digitalWrite(sparkPin, LOW);
     if(t - t0 < 1){
       setValveStates(1, 1, 0, 0, 0, 0);
 
@@ -218,6 +227,7 @@ void loop() {
   //Fire!!!!
   if(systemState == 1){
     if(t - t0 < 1){
+      digitalWrite(sparkPin, LOW);
       setValveStates(1, 1, 0, 0, 0, 0);
 
     } else if(t - t0 < 2.5){
@@ -229,9 +239,11 @@ void loop() {
       setValveStates(0, 0, 0, 0, 1, 1);
       
     } else if(t - t0 < 4.5){
+      digitalWrite(sparkPin, LOW);
       setValveStates(0, 0, 1, 1, 1, 1);
 
     } else if(t - t0 > 4.5){
+      digitalWrite(sparkPin, LOW);
       setValveStates(0, 0, 0, 0, 0, 0);
       systemState = 0;
     }

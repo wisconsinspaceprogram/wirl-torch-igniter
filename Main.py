@@ -5,6 +5,8 @@ from Plotter import Plotter
 from PlotterManager import PlotterManager
 import time
 import os
+import csv
+import datetime
 
 dirname = os.path.dirname(__file__)+"/Images/"
 print(dirname)
@@ -31,6 +33,7 @@ disconnectButton = Buttonify(dirname + 'Disconnect.png',(1275, 25), (150, 50), s
 connectionStatus = Buttonify(dirname + 'Disconnected.png', (1450, 25), (300, 50), screen)
 
 #Data buttons
+newLogButton = Buttonify(dirname + 'NewLog.png',(100, 25), (150, 50), screen)
 clearButton = Buttonify(dirname + 'Clear.png',(275, 25), (150, 50), screen)
 pauseButton = Buttonify(dirname + 'Pause.png',(450, 25), (150, 50), screen)
 playButton = Buttonify(dirname + 'Play.png',(625, 25), (150, 50), screen)
@@ -85,6 +88,8 @@ plotters = PlotterManager([Plotter(screen, "Methane Pre-Valve", "Temperature [C]
                            Plotter(screen, "Oxygen Pre-Valve", "Pressure [psig]", 500, 500, 500, 200),
                            Plotter(screen, "Oxygen Post-Valve", "Pressure [psig]", 500, 700, 500, 200)])
 
+#Data logging stuff
+filename = os.path.dirname(__file__)+'/Logs/' + str(datetime.datetime.now()).replace(" ", "_").replace(".", "_").replace(":", "_") + '.csv'
 
 # Main loop
 while True:
@@ -147,6 +152,10 @@ while True:
           if playButton[1].collidepoint(mouse):
             collectData = True
 
+          #New Log File
+          if newLogButton[1].collidepoint(mouse):
+            filename = os.path.dirname(__file__)+'/Logs/' + str(datetime.datetime.now()).replace(" ", "_").replace(".", "_").replace(":", "_") + '.csv'
+
           #Valve buttons
           for v in range(len(valves)):
             if valves[v].collidepoint(mouse) and connected:
@@ -185,6 +194,12 @@ while True:
         line = new_lines[l]
         data_array = line.split(",")
         print(line)
+
+        #Logging non-empty lines ("" is an empty line so > 2)
+        if len(data_array) > 2:
+          with open(filename, 'a', newline='') as csvfile:
+            csv_writer = csv.writer(csvfile)
+            csv_writer.writerow(data_array)
 
         #Checking to make sure we have no null values
         fullData = True
