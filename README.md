@@ -49,3 +49,5 @@ You can also use the buttons below the PNID to execute pre-programmed sequences.
 Before running a true test, click the new log button to start a new log file and make it easier to access the test's telemetry.
 
 Anyways, if you have any other questions, ask John.
+
+Also please add any info / descriptions you have to this readme about the project, this is by far a full outline of the project as it stands :) 
