@@ -314,5 +314,5 @@ float get_temperature(int pin, float oldTemp) {
 float get_pressure(int pin, float oldPsi){
   float reading = analogRead(pin);
   float psi = (reading/1024.0*5.0 - 0.5) * 75 + 1.98 +.25;
-  return psi * 0.4 + oldPsi * 0.6;
+  return psi * 0.2 + oldPsi * 0.8;
 }
