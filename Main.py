@@ -70,7 +70,14 @@ def updateSystemState(state):
   path = dirname + "State" + str(state) + ".png"
   Buttonify(path, (1150, 550), (150, 50), screen)
 
+def updateSDState(SDState):
+  path = dirname + "SD" + str(SDState) + ".png"
+  Buttonify(path, (1500, 550), (150, 50), screen)
+
 updateSystemState(0)
+updateSDState(0)
+
+sdConnectButton = Buttonify(dirname + 'SDLoad.png',(1500, 625), (150, 50), screen)
 
 # Computer end state variables
 connected = False
@@ -178,6 +185,10 @@ while True:
           if dryFireButton[1].collidepoint(mouse) and connected:
             bt.send_line("s11e")
 
+          #SD Reload
+          if sdConnectButton[1].collidepoint(mouse) and connected:
+            bt.send_line("s12e")
+
     # Reading data
     if connected:
       #Read new data
@@ -197,9 +208,9 @@ while True:
 
         #Logging non-empty lines ("" is an empty line so > 2)
         if len(data_array) > 2:
-          with open(filename, 'a', newline='') as csvfile:
+          with open(filename, 'a', newline='', errors='ignore') as csvfile:
             csv_writer = csv.writer(csvfile)
-            csv_writer.writerow(data_array)
+            csv_writer.writerow(data_array, )
 
         #Checking to make sure we have no null values
         fullData = True
@@ -208,10 +219,10 @@ while True:
             fullData = False
 
         # If right number of datapoints
-        if len(data_array) == 11 and fullData:
+        if len(data_array) == 12 and fullData:
           #Plotting on graphs
           if collectData:
-            plotters.new_data(data_array) #first index is time, 2nd is state (not used), 3rd is valve state (not used), rest are for plotting
+            plotters.new_data(data_array) #first index is time, 2nd is state (not used), 3rd is valve state (not used), rest are for plotting, last one is SD data
         
           #Updating valve symbols
           vavleStates = data_array[2].split(":")
@@ -220,8 +231,13 @@ while True:
             
           #System state update
           systemState = int(data_array[1])
-          if(systemState >= 0 and systemState <= 10):
+          if(systemState >= 0 and systemState <= 12):
             updateSystemState(systemState)
+
+          #SD update
+          sdLoaded = int(data_array[11])
+          if(sdLoaded >= 0 and sdLoaded <= 1):
+            updateSDState(sdLoaded)
 
     # Updating visual display
     plotters.update_graphs()

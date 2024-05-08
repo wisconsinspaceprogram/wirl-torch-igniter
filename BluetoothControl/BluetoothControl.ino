@@ -1,13 +1,13 @@
 //Valve pins
 #define methMainPin 3 // Main methane tank 
 #define oxMainPin 4   // Main oxygen tank
-#define nMethPin 5    // Nitrogen on methane side
+#define nMethPin   4    // Nitrogen on methane side
 #define nOxPin 6      // Nitrogren on ox side
-#define methIgnitorPin 7  // Methane side valve by combustion
+#define methIgnitorPin 3  // Methane side valve by combustion
 #define oxIgnitorPin 8    // Ox side valve by combustion
 
 //Spark plug pin
-#define sparkPin 9    //Spark plug pin
+#define sparkPin 2    //Spark plug pin
 
 //Thermocouples
 #define thermo1Pin A0    //Methane side first
@@ -45,6 +45,7 @@ float oldTemperature4 = 0;
 // 9=> toggle valve 5, meth final,
 // 10=> toggle valve 6, ox final,
 // 11=> dry firing,
+// 12=> reload SD card
 int systemState = 0;  //System State of firing vs idle:
 
 
@@ -54,14 +55,20 @@ int valveStates[] = {0, 0, 0, 0, 0, 0}; //Meth main, ox main, nitrogen meth, nit
 int valveCnt = 6;
 
 //Defining serial output so it works with bluetooth module
-#define ser Serial1
+#define bluetooth Serial1
+
+//SD Card stuff
+#include <SD.h> //For SD Card
+File myFile;
+const int chipSelect = 53;
+double dataOut[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int dataOutLength = 16;
+bool sdLoaded = false;
 
 void setup() {
-  ser.begin(9600);
+  bluetooth.begin(9600);
   Serial.begin(9600);
 
-  Serial.println("Start");
-  Serial.println("Start");
   Serial.println("Start");
 
   //Configuring pins
@@ -77,6 +84,15 @@ void setup() {
   digitalWrite(sparkPin, LOW);
   setValveStates(0, 0, 0, 0, 0, 0);
 
+  //Starting the SD Card
+  sdLoaded = (SD.begin(chipSelect));  //True if started properly, false if not detected
+  myFile = SD.open("text.csv", FILE_WRITE);
+  if(myFile){
+    myFile.write("State, Meth Main, Ox Main, Meth N, Ox N, Meth Ign, Ox Ign, M Pre [C], M Post[C], Ox Pre[C], Ox Post[C], M Pre [psig], M Post[psig], Ox Pre[psig], Ox Post[psig], SD Loaded, Time");
+  } else {
+    sdLoaded = false;
+  }
+
 }
 
 //Incoming messages
@@ -88,8 +104,8 @@ void loop() {
 
   //Reading any incoming bluetooth messages
   command = "";
-  while(ser.available()){
-    char nextChar = char(ser.read());
+  while(bluetooth.available()){
+    char nextChar = char(bluetooth.read());
     if(nextChar == 's'){
       incomingCommand = "";
     } else if(nextChar == 'e'){
@@ -136,10 +152,10 @@ void loop() {
   }
 
   //Logging info:
-  ser.print(t);
-  ser.print(",");
-  ser.print(systemState);
-  ser.print(",");
+  bluetooth.print(t);
+  bluetooth.print(",");
+  bluetooth.print(systemState);
+  bluetooth.print(",");
 
   //Forcing spark pin off
   if(systemState == 0){
@@ -249,35 +265,73 @@ void loop() {
     }
   }
 
+  //SD update
+  if(systemState == 12){
+    //Starting the SD Card
+    sdLoaded = (SD.begin(chipSelect));  //True if started properly, false if not detected
+    myFile = SD.open("text.csv", FILE_WRITE);
+    if(myFile){
+      myFile.write("State, Meth Main, Ox Main, Meth N, Ox N, Meth Ign, Ox Ign, M Pre [C], M Post[C], Ox Pre[C], Ox Post[C], M Pre [psig], M Post[psig], Ox Pre[psig], Ox Post[psig], SD Loaded, Time");
+    } else {
+      sdLoaded = false;
+    }
+
+    systemState = 0;
+  }
+
 
   //Updating valves based on desired state
   setValves();
   
   //Logging more info
   for(int i = 0; i < valveCnt; i++){
-    ser.print(valveStates[i]);
+    bluetooth.print(valveStates[i]);
     if(i != valveCnt-1){
-      ser.print(":");
+      bluetooth.print(":");
     }
   }
 
-  ser.print(",");
-  ser.print(thermo1);
-  ser.print(",");
-  ser.print(thermo2);
-  ser.print(",");
-  ser.print(thermo3);
-  ser.print(",");
-  ser.print(thermo4);
-  ser.print(",");
-  ser.print(pressure1);
-  ser.print(",");
-  ser.print(pressure2);
-  ser.print(",");
-  ser.print(pressure3);
-  ser.print(",");
-  ser.print(pressure4);
-  ser.print("|"); //End of message seperator
+  bluetooth.print(",");
+  bluetooth.print(thermo1);
+  bluetooth.print(",");
+  bluetooth.print(thermo2);
+  bluetooth.print(",");
+  bluetooth.print(thermo3);
+  bluetooth.print(",");
+  bluetooth.print(thermo4);
+  bluetooth.print(",");
+  bluetooth.print(pressure1);
+  bluetooth.print(",");
+  bluetooth.print(pressure2);
+  bluetooth.print(",");
+  bluetooth.print(pressure3);
+  bluetooth.print(",");
+  bluetooth.print(pressure4);
+  bluetooth.print(",");
+  bluetooth.print(sdLoaded);
+  bluetooth.print("|"); //End of message seperator
+
+  //Writing data to SD card
+  //Headers: "State, Meth Main, Ox Main, Meth N, Ox N, Meth Ign, Ox Ign, M Pre [C], M Post[C], Ox Pre[C], Ox Post[C], M Pre [psig], M Post[psig], Ox Pre[psig], Ox Post[psig], SD Loaded, Time" 
+  dataOut[0] = systemState;
+  dataOut[1] = valveStates[0];
+  dataOut[2] = valveStates[1];
+  dataOut[3] = valveStates[2];
+  dataOut[4] = valveStates[3];
+  dataOut[5] = valveStates[4];
+  dataOut[6] = valveStates[5];
+  dataOut[7] = thermo1;
+  dataOut[8] = thermo2;
+  dataOut[9] = thermo3; 
+  dataOut[10] = thermo4;
+  dataOut[11] = pressure1;
+  dataOut[12] = pressure2;
+  dataOut[13] = pressure3;
+  dataOut[14] = pressure4;
+  dataOut[15] = sdLoaded ? 1 : 0;
+  dataOut[16] = t;
+
+  //writeToSD("text.csv", dataOut);
 }
 
 void toggleValve(int index){
@@ -315,4 +369,34 @@ float get_pressure(int pin, float oldPsi){
   float reading = analogRead(pin);
   float psi = (reading/1024.0*5.0 - 0.5) * 75 + 1.98 +.25;
   return psi * 0.2 + oldPsi * 0.8;
+}
+
+bool writeToSD(char filename[], double out[]){
+  myFile = SD.open(filename, FILE_WRITE);     
+   // if the file opened okay, write to it:
+   if (myFile) 
+   {
+     Serial.println("Writing to csv.txt");
+     for(int i = 0; i <= dataOutLength; i++){
+      myFile.print(out[i]);
+      Serial.print(out[i]);
+      
+      if(i != dataOutLength){
+        myFile.print(",");
+        Serial.print(",");
+        
+      }
+     }
+     myFile.println();
+     Serial.println();
+     myFile.close();
+   } 
+   else 
+   {
+     Serial.println("error opening csv.txt");
+     //SD.begin(chipSelect);
+     sdLoaded = false;
+   }
+   
+   return true;
 }
