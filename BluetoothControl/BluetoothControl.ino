@@ -61,7 +61,7 @@ int valveCnt = 6;
 #include <SD.h> //For SD Card
 File myFile;
 const int chipSelect = 53;
-double dataOut[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+double dataOut[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int dataOutLength = 16;
 bool sdLoaded = false;
 
@@ -331,7 +331,7 @@ void loop() {
   dataOut[15] = sdLoaded ? 1 : 0;
   dataOut[16] = t;
 
-  //writeToSD("text.csv", dataOut);
+  writeToSD("text.csv", dataOut);
 }
 
 void toggleValve(int index){
@@ -376,7 +376,7 @@ bool writeToSD(char filename[], double out[]){
    // if the file opened okay, write to it:
    if (myFile) 
    {
-     Serial.println("Writing to csv.txt");
+     Serial.println("Writing to file");
      for(int i = 0; i <= dataOutLength; i++){
       myFile.print(out[i]);
       Serial.print(out[i]);

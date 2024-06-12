@@ -67,8 +67,9 @@ drawValves([0, 0, 0, 0, 0, 0])
 
 #System state display
 def updateSystemState(state):
-  path = dirname + "State" + str(state) + ".png"
-  Buttonify(path, (1150, 550), (150, 50), screen)
+  if(state < 11):
+    path = dirname + "State" + str(state) + ".png"
+    Buttonify(path, (1150, 550), (150, 50), screen)
 
 def updateSDState(SDState):
   path = dirname + "SD" + str(SDState) + ".png"

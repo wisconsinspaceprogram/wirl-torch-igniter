@@ -25,13 +25,13 @@ class BluetoothConnection:
   
   def read_lines(self):
     try:  
-      return func_timeout.func_timeout(2, self.read_lines_raw, [])
+      return func_timeout.func_timeout(4, self.read_lines_raw, [])
     except:
       return ['']
         
   def send_line(self, message):
     try:
-       func_timeout.func_timeout(2, lambda: self.socket.send(message), [])
+       func_timeout.func_timeout(4, lambda: self.socket.send(message), [])
        return True
     except Exception as msg:
        #print(msg)
