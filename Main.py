@@ -38,14 +38,28 @@ clearButton = Buttonify(dirname + 'Clear.png',(275, 25), (150, 50), screen)
 pauseButton = Buttonify(dirname + 'Pause.png',(450, 25), (150, 50), screen)
 playButton = Buttonify(dirname + 'Play.png',(625, 25), (150, 50), screen)
 
-#Vent buttons
-ventButton = Buttonify(dirname + 'Vent.png',(1100, 675), (150, 50), screen)
-oxVentButton = Buttonify(dirname + 'OxVent.png',(1100, 750), (150, 50), screen)
-methVenetButton = Buttonify(dirname + 'MethVent.png',(1100, 825), (150, 50), screen)
+def drawControlButtons():
+  #Vent buttons
+  global ventButton
+  global oxVentButton
+  global methVenetButton
+  global fireButton
+  global dryFireButton
+  global sdConnectButton
 
-#Fire Buttons
-fireButton = Buttonify(dirname + 'Fire.png',(1300, 675), (150, 50), screen)
-dryFireButton = Buttonify(dirname + 'DryFire.png',(1300, 750), (150, 50), screen)
+  ventButton = Buttonify(dirname + 'Vent.png',(1225, 675), (150, 50), screen)
+  oxVentButton = Buttonify(dirname + 'OxVent.png',(1225, 750), (150, 50), screen)
+  methVenetButton = Buttonify(dirname + 'MethVent.png',(1225, 825), (150, 50), screen)
+
+  #Fire Buttons
+  fireButton = Buttonify(dirname + 'Fire.png',(1425, 675), (150, 50), screen)
+  dryFireButton = Buttonify(dirname + 'DryFire.png',(1425, 750), (150, 50), screen)
+  sdConnectButton = Buttonify(dirname + 'SDLoad.png',(1425, 825), (150, 50), screen)
+
+drawControlButtons()
+
+#Arm Button
+armButton = Buttonify(dirname + 'Arm.png',(1040, 750), (150, 50), screen)
 
 # Valve base image
 Buttonify(dirname + 'PNID.png', (1000, 100), (800, 548), screen)
@@ -78,11 +92,13 @@ def updateSDState(SDState):
 updateSystemState(0)
 updateSDState(0)
 
-sdConnectButton = Buttonify(dirname + 'SDLoad.png',(1500, 625), (150, 50), screen)
+#Arm overlay
+armedOverlay = Buttonify(dirname + 'Disarmed.png', (1225, 675), (366, 211), screen)
 
 # Computer end state variables
 connected = False
 collectData = True
+armed = False
 
 bt = BluetoothConnection(0, False)
 
@@ -123,6 +139,19 @@ while True:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
           mouse = pygame.mouse.get_pos()
 
+          #Arm Button
+          if armButton[1].collidepoint(mouse) and connected:
+            drawControlButtons()
+            
+            if armed:
+              armed = False
+              armedOverlay = Buttonify(dirname + 'Disarmed.png', (1225, 675), (366, 211), screen)
+            else:
+              armed = True
+              armedOverlay = Buttonify(dirname + 'Armed.png', (1225, 675), (366, 211), screen)
+
+            
+            print(armed)
           #Connect button
           if connectButton[1].collidepoint(mouse) and not connected:
             print("Connect")
@@ -166,24 +195,24 @@ while True:
 
           #Valve buttons
           for v in range(len(valves)):
-            if valves[v].collidepoint(mouse) and connected:
+            if valves[v].collidepoint(mouse) and connected and armed:
               bt.send_line("s" + str(v+5) + "e")  #s and e used to note start and end of message, so we can only get full messages in arduino
 
           #vent buttons
-          if ventButton[1].collidepoint(mouse) and connected:
+          if ventButton[1].collidepoint(mouse) and connected and armed:
             bt.send_line("s4e")  #s and e used to note start and end of message, so we can only get full messages in arduino, state 4
 
-          if oxVentButton[1].collidepoint(mouse) and connected:
+          if oxVentButton[1].collidepoint(mouse) and connected and armed:
             bt.send_line("s2e")  #s and e used to note start and end of message, so we can only get full messages in arduino
 
-          if methVenetButton[1].collidepoint(mouse) and connected:
+          if methVenetButton[1].collidepoint(mouse) and connected and armed:
             bt.send_line("s3e")  #s and e used to note start and end of message, so we can only get full messages in arduino   
 
           #FIre buttons 
-          if fireButton[1].collidepoint(mouse) and connected:
+          if fireButton[1].collidepoint(mouse) and connected and armed:
             bt.send_line("s1e")
           
-          if dryFireButton[1].collidepoint(mouse) and connected:
+          if dryFireButton[1].collidepoint(mouse) and connected and armed:
             bt.send_line("s11e")
 
           #SD Reload
