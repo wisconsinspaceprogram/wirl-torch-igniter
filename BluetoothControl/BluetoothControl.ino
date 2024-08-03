@@ -1,10 +1,10 @@
 //Valve pins
-#define methMainPin 3 // Main methane tank 
-#define oxMainPin 4   // Main oxygen tank
-#define nMethPin   4    // Nitrogen on methane side
-#define nOxPin 6      // Nitrogren on ox side
-#define methIgnitorPin 3  // Methane side valve by combustion
-#define oxIgnitorPin 8    // Ox side valve by combustion
+#define methMainPin 6 // Main methane tank 6
+#define oxMainPin 4   // Main oxygen tank 4
+#define nMethPin   7    // Nitrogen on methane side 3
+#define nOxPin 3      // Nitrogren on ox side 7
+#define methIgnitorPin 8  // Methane side valve by combustion   8 
+#define oxIgnitorPin 5    // Ox side valve by combustion 5
 
 //Spark plug pin
 #define sparkPin 2    //Spark plug pin
