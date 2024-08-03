@@ -61,8 +61,8 @@ int valveCnt = 6;
 #include <SD.h> //For SD Card
 File myFile;
 const int chipSelect = 53;
-double dataOut[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int dataOutLength = 16;
+double dataOut[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int dataOutLength = 18;
 bool sdLoaded = false;
 
 void setup() {
@@ -88,7 +88,7 @@ void setup() {
   sdLoaded = (SD.begin(chipSelect));  //True if started properly, false if not detected
   myFile = SD.open("text.csv", FILE_WRITE);
   if(myFile){
-    myFile.write("State, Meth Main, Ox Main, Meth N, Ox N, Meth Ign, Ox Ign, M Pre [C], M Post[C], Ox Pre[C], Ox Post[C], M Pre [psig], M Post[psig], Ox Pre[psig], Ox Post[psig], SD Loaded, Time");
+    myFile.write("State, Meth Main, Ox Main, Meth N, Ox N, Meth Ign, Ox Ign, M Pre [C], M Post[C], Ox Pre[C], Ox Post[C], M Pre [psig], M Post[psig], Ox Pre[psig], Ox Post[psig], SD Loaded, Time, M_dot Methane [kg/s], M_dot Oxygen [kg/s]");
   } else {
     sdLoaded = false;
   }
@@ -141,6 +141,19 @@ void loop() {
   oldTemperature2 = thermo2;
   oldTemperature3 = thermo3;
   oldTemperature4 = thermo4;
+
+  //Calculating the mass flow rates
+  float mDotMethane = 0.00124 * sqrt((pressure1 - pressure2) / pressure1) * sqrt(9 / 5 * thermo1 + 491.67) * (pressure1  / (thermo1 + 273.15));
+  float mDotOxygen = 0.00176 * sqrt((pressure1 - pressure2) / pressure1) * sqrt(9 / 5 * thermo1 + 491.67) * (pressure1  / (thermo1 + 273.15));
+
+  //If the run valve is shut, then we should probably say there isn't any mass flow am I right
+  if(valveStates[4] != 1){
+    mDotMethane = 0;
+  }
+
+  if(valveStates[5] != 1){
+    mDotOxygen = 0;
+  }
 
   float t = millis()/1000.0;
   
@@ -308,6 +321,10 @@ void loop() {
   bluetooth.print(",");
   bluetooth.print(pressure4);
   bluetooth.print(",");
+  bluetooth.print(mDotMethane);
+  bluetooth.print(",");
+  bluetooth.print(mDotOxygen);
+  bluetooth.print(",");
   bluetooth.print(sdLoaded);
   bluetooth.print("|"); //End of message seperator
 
@@ -330,6 +347,8 @@ void loop() {
   dataOut[14] = pressure4;
   dataOut[15] = sdLoaded ? 1 : 0;
   dataOut[16] = t;
+  dataOut[17] = mDotMethane;
+  dataOut[18] = mDotOxygen;
 
   writeToSD("text.csv", dataOut);
 }

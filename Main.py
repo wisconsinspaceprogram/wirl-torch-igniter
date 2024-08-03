@@ -14,7 +14,7 @@ print(dirname)
 # Screen and window settings
 pygame.init()
 pygame.display.set_caption("WIRL Igniter Control")
-screen = pygame.display.set_mode((1800,900))
+screen = pygame.display.set_mode((1900,1000))
 screen.fill((200, 200, 200))
 
 
@@ -28,9 +28,9 @@ def Buttonify(Picture, coords, size, surface):
     return (image,imagerect)
 
 #Bluetooth buttons
-connectButton = Buttonify(dirname + 'Connect.png',(1100, 25), (150, 50), screen)
-disconnectButton = Buttonify(dirname + 'Disconnect.png',(1275, 25), (150, 50), screen)
-connectionStatus = Buttonify(dirname + 'Disconnected.png', (1450, 25), (300, 50), screen)
+connectButton = Buttonify(dirname + 'Connect.png',(1200, 25), (150, 50), screen)
+disconnectButton = Buttonify(dirname + 'Disconnect.png',(1375, 25), (150, 50), screen)
+connectionStatus = Buttonify(dirname + 'Disconnected.png', (1550, 25), (300, 50), screen)
 
 #Data buttons
 newLogButton = Buttonify(dirname + 'NewLog.png',(100, 25), (150, 50), screen)
@@ -47,22 +47,22 @@ def drawControlButtons():
   global dryFireButton
   global sdConnectButton
 
-  ventButton = Buttonify(dirname + 'Vent.png',(1225, 675), (150, 50), screen)
-  oxVentButton = Buttonify(dirname + 'OxVent.png',(1225, 750), (150, 50), screen)
-  methVenetButton = Buttonify(dirname + 'MethVent.png',(1225, 825), (150, 50), screen)
+  ventButton = Buttonify(dirname + 'Vent.png',(1375, 675), (150, 50), screen)
+  oxVentButton = Buttonify(dirname + 'OxVent.png',(1375, 750), (150, 50), screen)
+  methVenetButton = Buttonify(dirname + 'MethVent.png',(1375, 825), (150, 50), screen)
 
   #Fire Buttons
-  fireButton = Buttonify(dirname + 'Fire.png',(1425, 675), (150, 50), screen)
-  dryFireButton = Buttonify(dirname + 'DryFire.png',(1425, 750), (150, 50), screen)
-  sdConnectButton = Buttonify(dirname + 'SDLoad.png',(1425, 825), (150, 50), screen)
+  fireButton = Buttonify(dirname + 'Fire.png',(1575, 675), (150, 50), screen)
+  dryFireButton = Buttonify(dirname + 'DryFire.png',(1575, 750), (150, 50), screen)
+  sdConnectButton = Buttonify(dirname + 'SDLoad.png',(1575, 825), (150, 50), screen)
 
 drawControlButtons()
 
 #Arm Button
-armButton = Buttonify(dirname + 'Arm.png',(1040, 750), (150, 50), screen)
+armButton = Buttonify(dirname + 'Arm.png',(1175, 675), (150, 50), screen)
 
 # Valve base image
-Buttonify(dirname + 'PNID.png', (1000, 100), (800, 548), screen)
+Buttonify(dirname + 'PNID.png', (1150, 100), (800, 548), screen)
 
 # Valve display
 valves = [None] * 6
@@ -70,12 +70,12 @@ def drawValves(valveStates):
   openPath = dirname + 'OpenValve.png'
   closedPath = dirname + 'ClosedValve.png'
 
-  valves[0] = Buttonify(openPath if valveStates[0] == '1' else closedPath,(1150, 220), (30, 30), screen)[1]
-  valves[1] = Buttonify(openPath if valveStates[1] == '1' else closedPath,(1620, 220), (30, 30), screen)[1]
-  valves[2] = Buttonify(openPath if valveStates[2] == '1' else closedPath,(1240, 275), (30, 30), screen)[1]
-  valves[3] = Buttonify(openPath if valveStates[3] == '1' else closedPath,(1530, 275), (30, 30), screen)[1]
-  valves[4] = Buttonify(openPath if valveStates[4] == '1' else closedPath,(1275, 465), (30, 30), screen)[1]
-  valves[5] = Buttonify(openPath if valveStates[5] == '1' else closedPath,(1485, 465), (30, 30), screen)[1]
+  valves[0] = Buttonify(openPath if valveStates[0] == '1' else closedPath,(1300, 220), (30, 30), screen)[1]
+  valves[1] = Buttonify(openPath if valveStates[1] == '1' else closedPath,(1770, 220), (30, 30), screen)[1]
+  valves[2] = Buttonify(openPath if valveStates[2] == '1' else closedPath,(1390, 275), (30, 30), screen)[1]
+  valves[3] = Buttonify(openPath if valveStates[3] == '1' else closedPath,(1680, 275), (30, 30), screen)[1]
+  valves[4] = Buttonify(openPath if valveStates[4] == '1' else closedPath,(1425, 465), (30, 30), screen)[1]
+  valves[5] = Buttonify(openPath if valveStates[5] == '1' else closedPath,(1635, 465), (30, 30), screen)[1]
 
 drawValves([0, 0, 0, 0, 0, 0])
 
@@ -83,17 +83,17 @@ drawValves([0, 0, 0, 0, 0, 0])
 def updateSystemState(state):
   if(state < 11):
     path = dirname + "State" + str(state) + ".png"
-    Buttonify(path, (1150, 550), (150, 50), screen)
+    Buttonify(path, (1175, 750), (150, 50), screen)
 
 def updateSDState(SDState):
   path = dirname + "SD" + str(SDState) + ".png"
-  Buttonify(path, (1500, 550), (150, 50), screen)
+  Buttonify(path, (1175, 825), (150, 50), screen)
 
 updateSystemState(0)
 updateSDState(0)
 
 #Arm overlay
-armedOverlay = Buttonify(dirname + 'Disarmed.png', (1225, 675), (366, 211), screen)
+armedOverlay = Buttonify(dirname + 'Disarmed.png', (1375, 675), (366, 211), screen)
 
 # Computer end state variables
 connected = False
@@ -103,14 +103,16 @@ armed = False
 bt = BluetoothConnection(0, False)
 
 # Graphs
-plotters = PlotterManager([Plotter(screen, "Methane Pre-Valve", "Temperature [C]", 0, 100, 500, 200),
-                           Plotter(screen, "Methane Post-Valve", "Temperature [C]", 0, 300, 500, 200),
-                           Plotter(screen, "Oxygen Pre-Valve", "Temperature [C]", 0, 500, 500, 200),
-                           Plotter(screen, "Oxygen Post-Valve", "Temperature [C]", 0, 700, 500, 200),
-                           Plotter(screen, "Methane Pre-Valve", "Pressure [psig]", 500, 100, 500, 200),
-                           Plotter(screen, "Methane Post-Valve", "Pressure [psig]", 500, 300, 500, 200),
-                           Plotter(screen, "Oxygen Pre-Valve", "Pressure [psig]", 500, 500, 500, 200),
-                           Plotter(screen, "Oxygen Post-Valve", "Pressure [psig]", 500, 700, 500, 200)])
+plotters = PlotterManager([Plotter(screen, "Methane Pre-Valve", "Temperature [C]", 50, 100, 300, 200),
+                           Plotter(screen, "Methane Post-Valve", "Temperature [C]", 50, 300, 300, 200),
+                           Plotter(screen, "Oxygen Pre-Valve", "Temperature [C]", 50, 500, 300, 200),
+                           Plotter(screen, "Oxygen Post-Valve", "Temperature [C]", 50, 700, 300, 200),
+                           Plotter(screen, "Methane Pre-Valve", "Pressure [psia]", 375, 100, 300, 200),
+                           Plotter(screen, "Methane Post-Valve", "Pressure [psia]", 375, 300, 300, 200),
+                           Plotter(screen, "Oxygen Pre-Valve", "Pressure [psia]", 375, 500, 300, 200),
+                           Plotter(screen, "Oxygen Post-Valve", "Pressure [psia]", 375, 700, 300, 200),
+                           Plotter(screen, "Methane Mass Flow", "Mass Flow [kg/s]", 700, 100, 300, 200),
+                           Plotter(screen, "Oxygen Mass Flow", "Mass Flow [kg/s]", 700, 300, 300, 200)])
 
 #Data logging stuff
 filename = os.path.dirname(__file__)+'/Logs/' + str(datetime.datetime.now()).replace(" ", "_").replace(".", "_").replace(":", "_") + '.csv'
