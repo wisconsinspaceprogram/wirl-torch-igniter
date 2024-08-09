@@ -14,8 +14,9 @@ print(dirname)
 # Screen and window settings
 pygame.init()
 pygame.display.set_caption("WIRL Igniter Control")
-screen = pygame.display.set_mode((1900,1000))
+screen = pygame.display.set_mode((1950,1000))
 screen.fill((200, 200, 200))
+font = pygame.font.Font(None, 30) 
 
 
 # Buttons
@@ -58,6 +59,9 @@ def drawControlButtons():
 
 drawControlButtons()
 
+#Abort button
+abortButton = Buttonify(dirname + "Abort.png",(1775, 675), (150, 50), screen)
+
 #Arm Button
 armButton = Buttonify(dirname + 'Arm.png',(1175, 675), (150, 50), screen)
 
@@ -95,6 +99,57 @@ updateSDState(0)
 #Arm overlay
 armedOverlay = Buttonify(dirname + 'Disarmed.png', (1375, 675), (366, 211), screen)
 
+#Sensor calibrate buttons
+ptCalRect = pygame.Rect(750, 650, 250, 32)
+tcCalRect = pygame.Rect(750, 700, 250, 32)
+
+ptCalText = "PT Calibrate: "
+tcCalText = "TC Calibrate: "
+
+ptCalActive = False
+tcCalActive = False
+
+def drawCalibrationBoxes():
+  global ptCalText
+  global tcCalText
+  global screen
+
+  ptCalTextSurface = font.render(ptCalText, True, (255, 255, 255)) 
+  tcCalTextSurface = font.render(tcCalText, True, (255, 255, 255)) 
+
+  pygame.draw.rect(screen, (150, 150, 150) if ptCalActive else (100, 100, 100), ptCalRect) 
+  pygame.draw.rect(screen, (150, 150, 150) if tcCalActive else (100, 100, 100), tcCalRect) 
+
+  screen.blit(ptCalTextSurface, (ptCalRect.x + 5, ptCalRect.y + 5))
+  screen.blit(tcCalTextSurface, (tcCalRect.x + 5, tcCalRect.y + 5))
+
+  if not ptCalActive:
+    ptCalText = "PT Calibrate: "
+  if not tcCalActive:
+    tcCalText = "TC Calibrate: "
+  
+
+drawCalibrationBoxes()
+
+#Fire duration update buttons
+fdUpdateRect = pygame.Rect(750, 750, 250, 32)
+fdUpdateText = "Fire Duration: "
+fdUpdateActive = False
+
+def drawFDUpdateBox():
+  global fdUpdateText
+  global screen
+
+  fdUpdateTextSurface = font.render(fdUpdateText, True, (255,255,255))
+
+  pygame.draw.rect(screen, (150, 150, 150) if fdUpdateActive else (100, 100, 100), fdUpdateRect)
+  screen.blit(fdUpdateTextSurface, (fdUpdateRect.x + 5, fdUpdateRect.y + 5))
+
+  if not fdUpdateActive:
+    fdUpdateText = "Fire Duration: "
+
+drawFDUpdateBox()
+
 # Computer end state variables
 connected = False
 collectData = True
@@ -103,16 +158,16 @@ armed = False
 bt = BluetoothConnection(0, False)
 
 # Graphs
-plotters = PlotterManager([Plotter(screen, "Methane Pre-Valve", "Temperature [C]", 50, 100, 300, 200),
-                           Plotter(screen, "Methane Post-Valve", "Temperature [C]", 50, 300, 300, 200),
-                           Plotter(screen, "Oxygen Pre-Valve", "Temperature [C]", 50, 500, 300, 200),
-                           Plotter(screen, "Oxygen Post-Valve", "Temperature [C]", 50, 700, 300, 200),
-                           Plotter(screen, "Methane Pre-Valve", "Pressure [psia]", 375, 100, 300, 200),
-                           Plotter(screen, "Methane Post-Valve", "Pressure [psia]", 375, 300, 300, 200),
-                           Plotter(screen, "Oxygen Pre-Valve", "Pressure [psia]", 375, 500, 300, 200),
-                           Plotter(screen, "Oxygen Post-Valve", "Pressure [psia]", 375, 700, 300, 200),
-                           Plotter(screen, "Methane Mass Flow", "Mass Flow [kg/s]", 700, 100, 300, 200),
-                           Plotter(screen, "Oxygen Mass Flow", "Mass Flow [kg/s]", 700, 300, 300, 200)])
+plotters = PlotterManager([Plotter(screen, "Methane Pre-Valve", "Temperature [C]", 50, 100, 300, 200, 1),
+                           Plotter(screen, "Methane Post-Valve", "Temperature [C]", 50, 300, 300, 200, 1),
+                           Plotter(screen, "Oxygen Pre-Valve", "Temperature [C]", 50, 500, 300, 200, 1),
+                           Plotter(screen, "Oxygen Post-Valve", "Temperature [C]", 50, 700, 300, 200, 1),
+                           Plotter(screen, "Methane Pre-Valve", "Pressure [psia]", 375, 100, 300, 200, 1),
+                           Plotter(screen, "Methane Post-Valve", "Pressure [psia]", 375, 300, 300, 200, 1),
+                           Plotter(screen, "Oxygen Pre-Valve", "Pressure [psia]", 375, 500, 300, 200, 1),
+                           Plotter(screen, "Oxygen Post-Valve", "Pressure [psia]", 375, 700, 300, 200, 1),
+                           Plotter(screen, "Methane Mass Flow", "Mass Flow [kg/s]", 700, 100, 300, 200, 0.0001),
+                           Plotter(screen, "Oxygen Mass Flow", "Mass Flow [kg/s]", 700, 300, 300, 200, 0.0001)])
 
 #Data logging stuff
 filename = os.path.dirname(__file__)+'/Logs/' + str(datetime.datetime.now()).replace(" ", "_").replace(".", "_").replace(":", "_") + '.csv'
@@ -159,15 +214,15 @@ while True:
             print("Connect")
 
             try:
-              connectionStatus = Buttonify(dirname + 'Connecting.png', (1450, 25), (300, 50), screen)
+              connectionStatus = Buttonify(dirname + 'Connecting.png', (1550, 25), (300, 50), screen)
               pygame.display.update()
 
               bt = BluetoothConnection('98:D3:51:FE:70:D0', True)
               connected = True
-              connectionStatus = Buttonify(dirname + 'Connected.png', (1450, 25), (300, 50), screen)
+              connectionStatus = Buttonify(dirname + 'Connected.png', (1550, 25), (300, 50), screen)
               plotters.clear()
             except:
-              connectionStatus = Buttonify(dirname + 'Disconnected.png', (1450, 25), (300, 50), screen)
+              connectionStatus = Buttonify(dirname + 'Disconnected.png', (1550, 25), (300, 50), screen)
               print("Failed to connect")
 
           #Disconnect button
@@ -175,7 +230,7 @@ while True:
             try:
               bt.disconnect()
               connected = False
-              connectionStatus = Buttonify(dirname + 'Disconnected.png', (1450, 25), (300, 50), screen)
+              connectionStatus = Buttonify(dirname + 'Disconnected.png', (1550, 25), (300, 50), screen)
             except:
               print("Failed to disconnect")
 
@@ -217,9 +272,51 @@ while True:
           if dryFireButton[1].collidepoint(mouse) and connected and armed:
             bt.send_line("s11e")
 
+          #Abort Button
+          if abortButton[1].collidepoint(mouse) and connected:
+            bt.send_line("sAe");
+
           #SD Reload
           if sdConnectButton[1].collidepoint(mouse) and connected:
             bt.send_line("s12e")
+
+          #Calibrate buttons
+          ptCalActive = ptCalRect.collidepoint(mouse)
+          tcCalActive = tcCalRect.collidepoint(mouse)
+          fdUpdateActive = fdUpdateRect.collidepoint(mouse)
+          
+        #Watching the user's input to add it to the calibration text window
+        if event.type == pygame.KEYDOWN:
+          if ptCalActive:
+            if event.key == pygame.K_BACKSPACE and ptCalText != "PT Calibrate: ": 
+              ptCalText = ptCalText[:-1]
+            elif ((event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN) and ptCalText != "PT Calibrate: "):
+              bt.send_line("s_P" + str(ptCalText[14:]) + "e")
+              #print("s_P" + str(ptCalText[14:]) + "e")
+              ptCalText = "PT Calibrate: "
+            elif not (event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN):
+              ptCalText += event.unicode
+
+          if tcCalActive:
+            if event.key == pygame.K_BACKSPACE and ptCalText != "TC Calibrate: ": 
+              tcCalText = tcCalText[:-1]
+            elif ((event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN) and tcCalText != "TC Calibrate: "):
+              bt.send_line("s_T" + str(tcCalText[14:]) + "e")
+              #print("s_T" + str(tcCalText[14:]) + "e")
+              tcCalText = "TC Calibrate: "
+            elif not (event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN):
+              tcCalText += event.unicode
+          
+          if fdUpdateActive:
+            if event.key == pygame.K_BACKSPACE and fdUpdateText != "Fire Duration: ": 
+              fdUpdateText = fdUpdateText[:-1]
+            elif ((event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN) and fdUpdateText != "Fire Duration: "):
+              bt.send_line("s_F" + str(fdUpdateText[15:]) + "e")
+
+              fdUpdateText = "Fire Duration: "
+            elif not (event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN):
+              fdUpdateText += event.unicode
+              
 
     # Reading data
     if connected:
@@ -230,7 +327,7 @@ while True:
       if new_lines == ['']:
         bt.disconnect()
         connected = False
-        connectionStatus = Buttonify(dirname + 'Disconnected.png', (1450, 25), (300, 50), screen)
+        connectionStatus = Buttonify(dirname + 'Disconnected.png', (1550, 25), (300, 50), screen)
 
       #Stripping data for each line
       for l in range(len(new_lines)):
@@ -251,7 +348,7 @@ while True:
             fullData = False
 
         # If right number of datapoints
-        if len(data_array) == 12 and fullData:
+        if len(data_array) == 22 and fullData:
           #Plotting on graphs
           if collectData:
             plotters.new_data(data_array) #first index is time, 2nd is state (not used), 3rd is valve state (not used), rest are for plotting, last one is SD data
@@ -267,11 +364,13 @@ while True:
             updateSystemState(systemState)
 
           #SD update
-          sdLoaded = int(data_array[11])
+          sdLoaded = int(data_array[13])
           if(sdLoaded >= 0 and sdLoaded <= 1):
             updateSDState(sdLoaded)
 
     # Updating visual display
+    drawCalibrationBoxes()
+    drawFDUpdateBox()
     plotters.update_graphs()
     pygame.display.update()
 

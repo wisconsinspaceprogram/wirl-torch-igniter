@@ -3,7 +3,7 @@ import pygame_chart as pyc
 
 class Plotter:
   
-  def __init__(self, screen, name, ylab, x, y, width, height):
+  def __init__(self, screen, name, ylab, x, y, width, height, margin):
     self.name = name
     self.datax = []
     self.datay = []
@@ -12,6 +12,7 @@ class Plotter:
     self.width = width
     self.height = height
     self.ylab = ylab
+    self.margin = margin
 
     self.fig = pyc.Figure(screen, x, y, width, height, bg_color=(200, 200, 200))
     self.fig.add_gridlines()
@@ -29,7 +30,7 @@ class Plotter:
   def update(self):
     if len(self.datax) > 4 and len(self.datay) > 4:
       self.fig.line(self.name, self.datax, self.datay)
-      self.fig.set_ylim((min(self.datay)-1, max(self.datay)+1))
+      self.fig.set_ylim((min(self.datay)-self.margin, max(self.datay)+self.margin))
       self.fig.draw() 
     
     else:

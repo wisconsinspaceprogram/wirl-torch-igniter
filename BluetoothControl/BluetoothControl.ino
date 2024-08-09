@@ -31,6 +31,25 @@ float oldTemperature2 = 0;
 float oldTemperature3 = 0;
 float oldTemperature4 = 0;
 
+//Extra smoothed old values to help set the baseline
+float oldPressure1Smooth = 0;
+float oldPressure2Smooth = 0;
+float oldPressure3Smooth = 0;
+float oldPressure4Smooth = 0;
+float oldTemperature1Smooth = 0;
+float oldTemperature2Smooth = 0;
+float oldTemperature3Smooth = 0;
+float oldTemperature4Smooth = 0;
+
+//Offset variables for calibration
+float pressure1Offset = 0;
+float pressure2Offset = 0;
+float pressure3Offset = 0;
+float pressure4Offset = 0;
+float temperature1Offset = 0;
+float temperature2Offset = 0;
+float temperature3Offset = 0;
+float temperature4Offset = 0;
 
 //System State Variables.
 // 0 => idle, 
@@ -50,6 +69,7 @@ int systemState = 0;  //System State of firing vs idle:
 
 
 float t0 = 0;           //Timer variable for each state
+float fireDuration = 1; //Default duration for fire duration
 
 int valveStates[] = {0, 0, 0, 0, 0, 0}; //Meth main, ox main, nitrogen meth, nitrogen ox, meth final, ox final
 int valveCnt = 6;
@@ -61,8 +81,8 @@ int valveCnt = 6;
 #include <SD.h> //For SD Card
 File myFile;
 const int chipSelect = 53;
-double dataOut[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int dataOutLength = 18;
+double dataOut[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int dataOutLength = 27;
 bool sdLoaded = false;
 
 void setup() {
@@ -88,7 +108,7 @@ void setup() {
   sdLoaded = (SD.begin(chipSelect));  //True if started properly, false if not detected
   myFile = SD.open("text.csv", FILE_WRITE);
   if(myFile){
-    myFile.write("State, Meth Main, Ox Main, Meth N, Ox N, Meth Ign, Ox Ign, M Pre [C], M Post[C], Ox Pre[C], Ox Post[C], M Pre [psig], M Post[psig], Ox Pre[psig], Ox Post[psig], SD Loaded, Time, M_dot Methane [kg/s], M_dot Oxygen [kg/s]");
+    myFile.write("State, Meth Main, Ox Main, Meth N, Ox N, Meth Ign, Ox Ign, M Pre [C], M Post[C], Ox Pre[C], Ox Post[C], M Pre [psig], M Post[psig], Ox Pre[psig], Ox Post[psig], SD Loaded, Time, M_dot Methane [kg/s], M_dot Oxygen [kg/s], P1 Offset, P2 offset, P3 Offset, P4 Offset, T1 Offset, T2 Offset, T3 Offset, T4 Offset, Fire Duration");
   } else {
     sdLoaded = false;
   }
@@ -122,15 +142,25 @@ void loop() {
   }
 
   //Getting data from sensors
-  float thermo1 = get_temperature(thermo1Pin, oldTemperature1);
-  float thermo2 = get_temperature(thermo2Pin, oldTemperature2);
-  float thermo3 = get_temperature(thermo3Pin, oldTemperature3);
-  float thermo4 = get_temperature(thermo4Pin, oldTemperature4);
+  float thermo1 = get_temperature(thermo1Pin, oldTemperature1, 0.1, temperature1Offset);
+  float thermo2 = get_temperature(thermo2Pin, oldTemperature2, 0.1, temperature2Offset);
+  float thermo3 = get_temperature(thermo3Pin, oldTemperature3, 0.1, temperature3Offset);
+  float thermo4 = get_temperature(thermo4Pin, oldTemperature4, 0.1, temperature4Offset);
 
-  float pressure1 = get_pressure(pressure1Pin, oldPressure1);
-  float pressure2 = get_pressure(pressure2Pin, oldPressure2);
-  float pressure3 = get_pressure(pressure3Pin, oldPressure3);
-  float pressure4 = get_pressure(pressure4Pin, oldPressure4);
+  float pressure1 = get_pressure(pressure1Pin, oldPressure1, 0.1, pressure1Offset);
+  float pressure2 = get_pressure(pressure2Pin, oldPressure2, 0.1, pressure2Offset);
+  float pressure3 = get_pressure(pressure3Pin, oldPressure3, 0.1, pressure3Offset);
+  float pressure4 = get_pressure(pressure4Pin, oldPressure4, 0.1, pressure4Offset);
+
+  float thermo1Smooth = get_temperature(thermo1Pin, oldTemperature1Smooth, 0.8, temperature1Offset);
+  float thermo2Smooth = get_temperature(thermo2Pin, oldTemperature2Smooth, 0.8, temperature2Offset);
+  float thermo3Smooth = get_temperature(thermo3Pin, oldTemperature3Smooth, 0.8, temperature3Offset);
+  float thermo4Smooth = get_temperature(thermo4Pin, oldTemperature4Smooth, 0.8, temperature4Offset);
+
+  float pressure1Smooth = get_pressure(pressure1Pin, oldPressure1Smooth, 0.8, pressure1Offset);
+  float pressure2Smooth = get_pressure(pressure2Pin, oldPressure2Smooth, 0.8, pressure2Offset);
+  float pressure3Smooth = get_pressure(pressure3Pin, oldPressure3Smooth, 0.8, pressure3Offset);
+  float pressure4Smooth = get_pressure(pressure4Pin, oldPressure4Smooth, 0.8, pressure4Offset);
 
   //Updating old data
   oldPressure1 = pressure1;
@@ -142,9 +172,20 @@ void loop() {
   oldTemperature3 = thermo3;
   oldTemperature4 = thermo4;
 
+  oldPressure1Smooth = pressure1Smooth;
+  oldPressure2Smooth = pressure2Smooth;
+  oldPressure3Smooth = pressure3Smooth;
+  oldPressure4Smooth = pressure4Smooth;
+  oldTemperature1Smooth = thermo1Smooth;
+  oldTemperature2Smooth = thermo2Smooth;
+  oldTemperature3Smooth = thermo3Smooth;
+  oldTemperature4Smooth = thermo4Smooth;
+
   //Calculating the mass flow rates
-  float mDotMethane = 0.00124 * sqrt((pressure1 - pressure2) / pressure1) * sqrt(9 / 5 * thermo1 + 491.67) * (pressure1  / (thermo1 + 273.15));
-  float mDotOxygen = 0.00176 * sqrt((pressure1 - pressure2) / pressure1) * sqrt(9 / 5 * thermo1 + 491.67) * (pressure1  / (thermo1 + 273.15));
+  //0.00124
+  //0.00176
+  float mDotMethane = 0.0015 * sqrt(max((pressure1 - pressure2) / pressure1, 0)) * sqrt(max(9 / 5 * thermo1 + 491.67, 0)) * (pressure1  / (thermo1 + 273.15));
+  float mDotOxygen = 0.0015 * sqrt(max((pressure1 - pressure2) / pressure1, 0)) * sqrt(max(9 / 5 * thermo1 + 491.67, 0)) * (pressure1  / (thermo1 + 273.15));
 
   //If the run valve is shut, then we should probably say there isn't any mass flow am I right
   if(valveStates[4] != 1){
@@ -158,10 +199,48 @@ void loop() {
   float t = millis()/1000.0;
   
   //Updating the system state based on the command given
-  if(systemState == 0 && command != ""){
+  if(systemState == 0 && command != "" && command.charAt(0) != '_'){
     systemState = command.toInt();
     t0 = t;
     
+  }
+
+  //Abort override
+  if(systemState != 0 && command == "A"){
+    systemState = 4;
+    t0 = t;
+  }
+  
+  if (systemState == 0 && command != "" && command.charAt(0) == '_'){
+    //_ leading the command means it's one of the calibration commands
+    // if the char after the _ is a P, it's a pressure calibration, if it's a T it's for temp/thermocouples
+
+    if(command.charAt(1) == 'P'){
+      //Pressure calibration
+
+      //Desired value
+      float desired = command.substring(2).toFloat();
+
+      pressure1Offset += desired - pressure1Smooth;
+      pressure2Offset += desired - pressure2Smooth;
+      pressure3Offset += desired - pressure3Smooth;
+      pressure4Offset += desired - pressure4Smooth;
+
+
+    } else if (command.charAt(1) == 'T') {
+      //Thermocouple calibration
+
+      //Desired value
+      float desired = command.substring(2).toFloat();
+
+      temperature1Offset += desired - thermo1Smooth;
+      temperature2Offset += desired - thermo2Smooth;
+      temperature3Offset += desired - thermo3Smooth;
+      temperature4Offset += desired - thermo4Smooth;
+    } else {
+      //Fire duration update
+      float fireDuration = command.substring(2).toFloat();
+    }
   }
 
   //Logging info:
@@ -224,7 +303,10 @@ void loop() {
     } else if(t - t0 < 2.5){
       setValveStates(0, 0, 1, 1, 1, 1);
 
-    } else if(t - t0 > 2.5){
+    } else if(t - t0 < 3){
+      setValveStates(0, 0, 0, 0, 1, 1);
+
+    } else if(t - t0 > 3){
       setValveStates(0, 0, 0, 0, 0, 0);
       systemState = 0;
     }
@@ -259,22 +341,17 @@ void loop() {
       digitalWrite(sparkPin, LOW);
       setValveStates(1, 1, 0, 0, 0, 0);
 
-    } else if(t - t0 < 2.5){
+    } else if(t - t0 < (fireDuration + 1)){
       digitalWrite(sparkPin, HIGH);
       setValveStates(1, 1, 0, 0, 1, 1);
 
-    } else if(t - t0 < 3.5){
+    } else if(t - t0 < (fireDuration + 2)){
       digitalWrite(sparkPin, LOW);
       setValveStates(0, 0, 0, 0, 1, 1);
       
-    } else if(t - t0 < 4.5){
-      digitalWrite(sparkPin, LOW);
-      setValveStates(0, 0, 1, 1, 1, 1);
-
-    } else if(t - t0 > 4.5){
-      digitalWrite(sparkPin, LOW);
-      setValveStates(0, 0, 0, 0, 0, 0);
-      systemState = 0;
+    } else if(t - t0 >= (fireDuration + 2)){
+      systemState = 4;
+      t0 = t;
     }
   }
 
@@ -321,15 +398,33 @@ void loop() {
   bluetooth.print(",");
   bluetooth.print(pressure4);
   bluetooth.print(",");
-  bluetooth.print(mDotMethane);
+  bluetooth.print(mDotMethane, 6);
   bluetooth.print(",");
-  bluetooth.print(mDotOxygen);
+  bluetooth.print(mDotOxygen, 6);
   bluetooth.print(",");
   bluetooth.print(sdLoaded);
+  bluetooth.print(",");
+  bluetooth.print(pressure1Offset);
+  bluetooth.print(",");
+  bluetooth.print(pressure2Offset);
+  bluetooth.print(",");
+  bluetooth.print(pressure3Offset);
+  bluetooth.print(",");
+  bluetooth.print(pressure4Offset);
+  bluetooth.print(",");
+  bluetooth.print(temperature1Offset);
+  bluetooth.print(",");
+  bluetooth.print(temperature2Offset);
+  bluetooth.print(",");
+  bluetooth.print(temperature3Offset);
+  bluetooth.print(",");
+  bluetooth.print(temperature4Offset);
+  bluetooth.print(",");
+  bluetooth.print(fireDuration);
+  
   bluetooth.print("|"); //End of message seperator
 
   //Writing data to SD card
-  //Headers: "State, Meth Main, Ox Main, Meth N, Ox N, Meth Ign, Ox Ign, M Pre [C], M Post[C], Ox Pre[C], Ox Post[C], M Pre [psig], M Post[psig], Ox Pre[psig], Ox Post[psig], SD Loaded, Time" 
   dataOut[0] = systemState;
   dataOut[1] = valveStates[0];
   dataOut[2] = valveStates[1];
@@ -349,6 +444,16 @@ void loop() {
   dataOut[16] = t;
   dataOut[17] = mDotMethane;
   dataOut[18] = mDotOxygen;
+  dataOut[19] = pressure1Offset;
+  dataOut[20] = pressure2Offset;
+  dataOut[21] = pressure3Offset;
+  dataOut[22] = pressure4Offset;
+  dataOut[23] = temperature1Offset;
+  dataOut[24] = temperature2Offset;
+  dataOut[25] = temperature3Offset;
+  dataOut[26] = temperature4Offset;
+  dataOut[27] = fireDuration;
+
 
   writeToSD("text.csv", dataOut);
 }
@@ -375,19 +480,19 @@ void setValves(){
   digitalWrite(oxIgnitorPin,  valveStates[5] == 0 ? LOW : HIGH);
 }
 
-float get_temperature(int pin, float oldTemp) {
+float get_temperature(int pin, float oldTemp, float smoothing, float offset) {
   float refVoltage = 5;
   float resolution = 10;
   float reading = analogRead(pin);
   float voltage = reading * (refVoltage / (pow(2, resolution)-1)); 
-  float newTemp = (voltage - 1.25) / 0.005;
-  return newTemp * 0.1 + oldTemp * 0.9;
+  float newTemp = (voltage - 1.25) / 0.005 + offset;
+  return newTemp * (1-smoothing) + oldTemp * smoothing;
 }
 
-float get_pressure(int pin, float oldPsi){
+float get_pressure(int pin, float oldPsi, float smoothing, float offset){
   float reading = analogRead(pin);
-  float psi = (reading/1024.0*5.0 - 0.5) * 75 + 1.98 +.25;
-  return psi * 0.2 + oldPsi * 0.8;
+  float psi = (reading/1024.0*5.0 - 0.5) * 75 + offset;
+  return psi * (1-smoothing) + oldPsi * smoothing;
 }
 
 bool writeToSD(char filename[], double out[]){
@@ -395,19 +500,19 @@ bool writeToSD(char filename[], double out[]){
    // if the file opened okay, write to it:
    if (myFile) 
    {
-     Serial.println("Writing to file");
+     //Serial.println("Writing to file");
      for(int i = 0; i <= dataOutLength; i++){
       myFile.print(out[i]);
-      Serial.print(out[i]);
+      //Serial.print(out[i]);
       
       if(i != dataOutLength){
         myFile.print(",");
-        Serial.print(",");
+        //Serial.print(",");
         
       }
      }
      myFile.println();
-     Serial.println();
+     //Serial.println();
      myFile.close();
    } 
    else 
