@@ -184,8 +184,8 @@ void loop() {
   //Calculating the mass flow rates
   //0.00124
   //0.00176
-  float mDotMethane = 0.0015 * sqrt(max((pressure1 - pressure2) / pressure1, 0)) * sqrt(max(9 / 5 * thermo1 + 491.67, 0)) * (pressure1  / (thermo1 + 273.15));
-  float mDotOxygen = 0.0015 * sqrt(max((pressure1 - pressure2) / pressure1, 0)) * sqrt(max(9 / 5 * thermo1 + 491.67, 0)) * (pressure1  / (thermo1 + 273.15));
+  float mDotMethane = 0.00124 * sqrt(max((pressure1 - pressure2) / pressure1, 0)) * sqrt(max(9 / 5 * thermo1 + 491.67, 0)) * (pressure1  / (thermo1 + 273.15));
+  float mDotOxygen = 0.00176 * sqrt(max((pressure1 - pressure2) / pressure1, 0)) * sqrt(max(9 / 5 * thermo1 + 491.67, 0)) * (pressure1  / (thermo1 + 273.15));
 
   //If the run valve is shut, then we should probably say there isn't any mass flow am I right
   if(valveStates[4] != 1){
@@ -239,7 +239,8 @@ void loop() {
       temperature4Offset += desired - thermo4Smooth;
     } else {
       //Fire duration update
-      float fireDuration = command.substring(2).toFloat();
+      fireDuration = command.substring(2).toFloat();
+      //Serial.println(fireDuration);
     }
   }
 
@@ -303,10 +304,10 @@ void loop() {
     } else if(t - t0 < 2.5){
       setValveStates(0, 0, 1, 1, 1, 1);
 
-    } else if(t - t0 < 3){
+    } else if(t - t0 < 4){
       setValveStates(0, 0, 0, 0, 1, 1);
 
-    } else if(t - t0 > 3){
+    } else if(t - t0 > 4){
       setValveStates(0, 0, 0, 0, 0, 0);
       systemState = 0;
     }
@@ -317,21 +318,21 @@ void loop() {
   //Dry Fire
   if(systemState == 11){
     digitalWrite(sparkPin, LOW);
-    if(t - t0 < 1){
+   if(t - t0 < 1){
+      digitalWrite(sparkPin, LOW);
       setValveStates(1, 1, 0, 0, 0, 0);
 
-    } else if(t - t0 < 2.5){
+    } else if(t - t0 < (fireDuration + 1)){
+      digitalWrite(sparkPin, LOW);
       setValveStates(1, 1, 0, 0, 1, 1);
 
-    } else if(t - t0 < 3.5){
+    } else if(t - t0 < (fireDuration + 2)){
+      digitalWrite(sparkPin, LOW);
       setValveStates(0, 0, 0, 0, 1, 1);
       
-    } else if(t - t0 < 4.5){
-      setValveStates(0, 0, 1, 1, 1, 1);
-
-    } else if(t - t0 > 4.5){
-      setValveStates(0, 0, 0, 0, 0, 0);
-      systemState = 0;
+    } else if(t - t0 >= (fireDuration + 2)){
+      systemState = 4;
+      t0 = t;
     }
   }
 

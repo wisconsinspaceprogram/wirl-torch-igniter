@@ -136,7 +136,7 @@ fdUpdateRect = pygame.Rect(750, 750, 250, 32)
 fdUpdateText = "Fire Duration: "
 fdUpdateActive = False
 
-def drawFDUpdateBox():
+def drawFDUpdateBox(fd):
   global fdUpdateText
   global screen
 
@@ -148,7 +148,12 @@ def drawFDUpdateBox():
   if not fdUpdateActive:
     fdUpdateText = "Fire Duration: "
 
-drawFDUpdateBox()
+  fdCurrentTextSurface = font.render("Currently: " + str(fd), True, (255, 255, 255))
+  pygame.draw.rect(screen, (100, 100, 100), pygame.Rect(750, 780, 250, 32))
+  screen.blit(fdCurrentTextSurface, (755, 785))
+
+fd = 0.0
+drawFDUpdateBox(fd)
 
 # Computer end state variables
 connected = False
@@ -348,7 +353,7 @@ while True:
             fullData = False
 
         # If right number of datapoints
-        if len(data_array) == 22 and fullData:
+        if len(data_array) == 23 and fullData:
           #Plotting on graphs
           if collectData:
             plotters.new_data(data_array) #first index is time, 2nd is state (not used), 3rd is valve state (not used), rest are for plotting, last one is SD data
@@ -368,9 +373,12 @@ while True:
           if(sdLoaded >= 0 and sdLoaded <= 1):
             updateSDState(sdLoaded)
 
+          #Fire duration display
+          fd = data_array[22]
+
     # Updating visual display
     drawCalibrationBoxes()
-    drawFDUpdateBox()
+    drawFDUpdateBox(fd)
     plotters.update_graphs()
     pygame.display.update()
 
